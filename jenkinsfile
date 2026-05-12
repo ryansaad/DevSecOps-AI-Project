@@ -75,16 +75,16 @@ pipeline {
             }
         }
 
-        // stage('Update Kubeconfig') {
-        //     steps {
-        //         sh '''
-        //             echo "Updating kubeconfig..."
-        //             aws eks update-kubeconfig \
-        //                 --region ap-northeast-1 \
-        //                 --name quantam-cluster
-        //         '''
-        //     }
-        // }
+        stage('Update Kubeconfig') {
+            steps {
+                sh '''
+                    echo "Updating kubeconfig..."
+                    aws eks update-kubeconfig \
+                        --region us-east-1 \
+                        --name quantam-cluster
+                '''
+            }
+        }
 
         // stage('Deploy to Kubernetes') {
         //     steps {

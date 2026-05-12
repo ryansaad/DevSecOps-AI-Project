@@ -16,7 +16,7 @@ spec:
         app: fullstack-app
     spec:
       containers:
-      - image: replace
+      - image: ryansaad85/devops-pipeline:0754d61a85b4224b1ce805100608d408d6ff3a3c
         name: devops-pipeline
 ---
 apiVersion: v1
