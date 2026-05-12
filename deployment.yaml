@@ -4,25 +4,35 @@ metadata:
   labels:
     app: fullstack-app
   name: fullstack-app
+  namespace: quantam
 spec:
   replicas: 3
   selector:
     matchLabels:
       app: fullstack-app
-  strategy: {}
   template:
     metadata:
       labels:
         app: fullstack-app
     spec:
       containers:
-      - image: ryansaad85/devops-pipeline:0754d61a85b4224b1ce805100608d408d6ff3a3c
+      - image: ryansaad85/devops-pipeline:IMAGE_PLACEHOLDER
         name: devops-pipeline
+        ports:
+        - containerPort: 8080  # Required for the Service to talk to the Pod
+        # Fix for the H2 Access Denied error without rebuilding the image:
+        volumeMounts:
+        - name: data-storage
+          mountPath: /app/data
+      volumes:
+      - name: data-storage
+        emptyDir: {}  # Provides a writable space for appuser
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: fullstack-app-service
+  namespace: quantam
 spec:
   selector:
     app: fullstack-app
@@ -30,4 +40,4 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 8080
-  type: LoadBalancer  
+  type: LoadBalancer
