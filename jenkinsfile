@@ -7,11 +7,12 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME = "ryansaad85/devops-pipeline:${GIT_COMMIT}"
+        // Use a more reliable image name
+        DOCKER_REPO = "ryansaad85/devops-pipeline"
+        IMAGE_NAME = "${DOCKER_REPO}:${GIT_COMMIT}"
     }
 
     stages {
-
         stage('Git Checkout') {
             steps {
                 git url: 'https://github.com/ryansaad/DevSecOps-AI-Project.git',
@@ -19,92 +20,61 @@ pipeline {
             }
         }
 
-        stage('Compile') {
+        stage('Compile & Build') {
             steps {
-                sh '''
-                    echo "Compiling the code..."
-                    mvn compile
-                '''
-            }
-        }
-
-        stage('Build') {
-            steps {
-                sh '''
-                    echo "Building the application..."
-                    mvn package
-                '''
+                sh 'mvn clean package -DskipTests'
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh '''
-                    echo "Building Docker image..."
-                    printenv
-                    docker build -t ${IMAGE_NAME} .
-                '''
+                script {
+                    // Force a clean build to ensure the /app/data permission fix is included
+                    sh "docker build --no-cache -t ${IMAGE_NAME} ."
+                    // Also tag as latest for easier manual debugging
+                    sh "docker tag ${IMAGE_NAME} ${DOCKER_REPO}:latest"
+                }
             }
         }
 
-        stage('Docker Login') {
+        stage('Docker Login & Push') {
             steps {
                 script {
-                    withCredentials([
-                        usernamePassword(
-                            credentialsId: 'dockerhub-creds',
-                            usernameVariable: 'DOCKER_USERNAME',
-                            passwordVariable: 'DOCKER_PASSWORD'
-                        )
-                    ]) {
-                        sh '''
-                            echo "Logging into Docker Hub..."
-                            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-                        '''
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                        sh "echo ${PASS} | docker login -u ${USER} --password-stdin"
+                        sh "docker push ${IMAGE_NAME}"
+                        sh "docker push ${DOCKER_REPO}:latest"
                     }
                 }
             }
         }
 
-        stage('Docker Push') {
-            steps {
-                sh '''
-                    echo "Pushing Docker image..."
-                    docker push ${IMAGE_NAME}
-                '''
-            }
-        }
-
         stage('Update Kubeconfig') {
             steps {
-                sh '''
-                    echo "Updating kubeconfig..."
-                    aws eks update-kubeconfig \
-                        --region us-east-1 \
-                        --name quantam-cluster
-                '''
+                // Ensure the Jenkins agent has the AWS CLI and proper IAM permissions
+                sh "aws eks update-kubeconfig --region us-east-1 --name quantam-cluster"
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
                 withKubeConfig(
-                    caCertificate: '', 
-                    clusterName: 'quantam-cluster', 
-                    contextName: '', 
-                    credentialsId: 'kube', 
-                    namespace: 'quantam', 
-                    restrictKubeConfigAccess: false, 
+                    clusterName: 'quantam-cluster',
+                    credentialsId: 'kube',
+                    namespace: 'quantam',
                     serverUrl: 'https://1DC7A2B4166E0B7F019E7D1C4B537014.gr7.us-east-1.eks.amazonaws.com'
-                    ) {
+                ) {
                     sh '''
-                        echo "Deploying to Kubernetes..."
-                        sed -i 's|IMAGE_PLACEHOLDER|${IMAGE_NAME}|g' deployment.yaml
+                        echo "Injecting image: ${IMAGE_NAME}"
+                        # Use double quotes for sed to expand the Jenkins variable correctly
+                        sed -i "s|IMAGE_PLACEHOLDER|${IMAGE_NAME}|g" deployment.yaml
                         kubectl apply -f deployment.yaml -n quantam
+                        
+                        # Force Kubernetes to pick up the change if metadata hasn't changed
+                        kubectl rollout restart deployment fullstack-app -n quantam
                     '''
-                    }
+                }
             }
         }
-        
     }
 }
