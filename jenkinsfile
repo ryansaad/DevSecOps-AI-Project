@@ -86,21 +86,24 @@ pipeline {
             }
         }
 
-        // stage('Deploy to Kubernetes') {
-        //     steps {
-        //         withKubeConfig(
-        //             clusterName: 'quantam-cluster',
-        //             credentialsId: 'kube',
-        //             namespace: 'quantam',
-        //             serverUrl: 'https://339EBFA756C1467BF3271A0E36722D0E.gr7.ap-northeast-1.eks.amazonaws.com',
-        //             restrictKubeConfigAccess: false
-        //         ) {
-        //             sh '''
-        //                 echo "Deploying to Kubernetes..."
-        //                 kubectl apply -f deployment.yaml -n quantam
-        //             '''
-        //         }
-        //     }
-        // }
+        stage('Deploy to Kubernetes') {
+            steps {
+                withKubeConfig(
+                    caCertificate: '', 
+                    clusterName: 'quantam-cluster', 
+                    contextName: '', 
+                    credentialsId: 'kube', 
+                    namespace: 'quantam', 
+                    restrictKubeConfigAccess: false, 
+                    serverUrl: 'https://1DC7A2B4166E0B7F019E7D1C4B537014.gr7.us-east-1.eks.amazonaws.com'
+                    ) {
+                    sh '''
+                        echo "Deploying to Kubernetes..."
+                        kubectl apply -f deployment.yaml -n quantam
+                    '''
+                    }
+            }
+        }
+        
     }
 }

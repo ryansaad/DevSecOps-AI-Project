@@ -1,1 +1,47 @@
-target/*
+# --- Security & Secrets (CRITICAL) ---
+# Never commit tokens, passwords, or private keys
+*.pem
+*.key
+*.token
+*secrets.yaml
+*.env
+*.env.*
+!.env.example
+.vault-pass
+
+# --- Kubernetes & Helm ---
+# Ignore local kubeconfig if you happen to copy it into the project
+.kube/
+config
+# Helm dependencies and local charts
+charts/
+tmp/
+*.tgz
+
+# --- Terraform (Infrastructure as Code) ---
+# Local state files can contain secrets in plain text
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+# Terraform crash logs
+crash.log
+# Provider plugins
+.terraform.lock.hcl
+
+# --- CI/CD & Build Artifacts ---
+# Jenkins/GitHub Actions/GitLab local runner files
+.jenkins/
+dist/
+build/
+out/
+*.log
+bin/
+obj/
+
+# --- IDE & OS Files ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
