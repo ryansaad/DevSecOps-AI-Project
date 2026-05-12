@@ -65,13 +65,15 @@ pipeline {
                     serverUrl: 'https://1DC7A2B4166E0B7F019E7D1C4B537014.gr7.us-east-1.eks.amazonaws.com'
                 ) {
                     sh '''
-                        echo "Injecting image: ${IMAGE_NAME}"
-                        # Use double quotes for sed to expand the Jenkins variable correctly
-                        // In the Jenkinsfile Deploy stage
-                        "sed -i 's|IMAGE_PLACEHOLDER|${GIT_COMMIT}|g' deployment.yaml"
+                        echo "Injecting image tag: ${GIT_COMMIT}"
+                        
+                        # Use double quotes for sed so Jenkins expands the variable
+                        # Ensure deployment.yaml has: image: ryansaad85/devops-pipeline:IMAGE_PLACEHOLDER
+                        sed -i "s|IMAGE_PLACEHOLDER|${GIT_COMMIT}|g" deployment.yaml
+                        
                         kubectl apply -f deployment.yaml -n quantam
                         
-                        # Force Kubernetes to pick up the change if metadata hasn't changed
+                        # Force the rollout to ensure the fresh image is pulled
                         kubectl rollout restart deployment fullstack-app -n quantam
                     '''
                 }
