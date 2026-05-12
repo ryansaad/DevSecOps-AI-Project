@@ -67,7 +67,8 @@ pipeline {
                     sh '''
                         echo "Injecting image: ${IMAGE_NAME}"
                         # Use double quotes for sed to expand the Jenkins variable correctly
-                        sed -i "s|IMAGE_PLACEHOLDER|${IMAGE_NAME}|g" deployment.yaml
+                        // In the Jenkinsfile Deploy stage
+                        sed -i 's|IMAGE_PLACEHOLDER|${GIT_COMMIT}|g' deployment.yaml
                         kubectl apply -f deployment.yaml -n quantam
                         
                         # Force Kubernetes to pick up the change if metadata hasn't changed
