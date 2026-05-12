@@ -47,33 +47,33 @@ pipeline {
             }
         }
 
-        // stage('Docker Login') {
-        //     steps {
-        //         script {
-        //             withCredentials([
-        //                 usernamePassword(
-        //                     credentialsId: 'dockerhub-creds',
-        //                     usernameVariable: 'DOCKER_USERNAME',
-        //                     passwordVariable: 'DOCKER_PASSWORD'
-        //                 )
-        //             ]) {
-        //                 sh '''
-        //                     echo "Logging into Docker Hub..."
-        //                     echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-        //                 '''
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Docker Login') {
+            steps {
+                script {
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'dockerhub-creds',
+                            usernameVariable: 'DOCKER_USERNAME',
+                            passwordVariable: 'DOCKER_PASSWORD'
+                        )
+                    ]) {
+                        sh '''
+                            echo "Logging into Docker Hub..."
+                            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+                        '''
+                    }
+                }
+            }
+        }
 
-        // stage('Docker Push') {
-        //     steps {
-        //         sh '''
-        //             echo "Pushing Docker image..."
-        //             docker push ${IMAGE_NAME}
-        //         '''
-        //     }
-        // }
+        stage('Docker Push') {
+            steps {
+                sh '''
+                    echo "Pushing Docker image..."
+                    docker push ${IMAGE_NAME}
+                '''
+            }
+        }
 
         // stage('Update Kubeconfig') {
         //     steps {
